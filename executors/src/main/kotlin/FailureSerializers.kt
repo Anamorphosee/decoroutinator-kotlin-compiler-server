@@ -55,7 +55,7 @@ class ThrowableSerializer : JsonSerializer<Throwable>() {
     gen.writeStartObject()
     gen.writeStringField("message", value.message)
     gen.writeStringField("fullName", value.javaClass.name)
-    gen.writeObjectField("stackTrace", value.stackTrace?.take(3))
+    gen.writeObjectField("stackTrace", value.stackTrace)
     gen.writeObjectField("cause", if (value.cause != value) value.cause else null)
     gen.writeEndObject()
   }

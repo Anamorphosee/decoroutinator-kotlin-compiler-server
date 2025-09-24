@@ -12,16 +12,18 @@ class CompilerRestController(private val kotlinProjectExecutor: KotlinProjectExe
   fun executeKotlinProjectEndpoint(
     @RequestBody project: Project,
     @RequestParam(defaultValue = "false") addByteCode: Boolean,
+    @RequestParam("recoveryType", required = false) recoveryType: RecoveryType?
   ): ExecutionResult {
-    return kotlinProjectExecutor.run(project, addByteCode)
+    return kotlinProjectExecutor.run(project, addByteCode, recoveryType)
   }
 
   @PostMapping("/test")
   fun testKotlinProjectEndpoint(
     @RequestBody project: Project,
     @RequestParam(defaultValue = "false") addByteCode: Boolean,
+    @RequestParam(required = false) recoveryType: RecoveryType?
   ): ExecutionResult {
-    return kotlinProjectExecutor.test(project, addByteCode)
+    return kotlinProjectExecutor.test(project, addByteCode, recoveryType)
   }
 
   @PostMapping("/translate")

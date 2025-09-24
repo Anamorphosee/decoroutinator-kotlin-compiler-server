@@ -10,6 +10,13 @@ data class Project(
   val confType: ProjectType = ProjectType.JAVA
 )
 
+enum class RecoveryType {
+    DECOROUTINATOR,
+    STDLIB,
+    NONE,
+    FULL
+}
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ProjectFile(val text: String = "", val name: String = "")
 

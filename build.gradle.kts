@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin.Companion.kotl
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.bundling.BootJar
+import java.nio.file.Files
 
 val policy: String by System.getProperties()
 
@@ -38,6 +39,11 @@ val resourceDependency: Configuration by configurations.creating {
     isCanBeConsumed = false
 }
 
+val decoroutinatorAgentConf: Configuration by configurations.creating {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+}
+
 dependencies {
     annotationProcessor("org.springframework:spring-context-indexer")
     implementation("com.google.code.gson:gson")
@@ -65,6 +71,7 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
 
     resourceDependency(libs.skiko.js.wasm.runtime)
+    decoroutinatorAgentConf(libs.decoroutinator.agent)
 }
 
 fun buildPropertyFile() {
@@ -73,6 +80,27 @@ fun buildPropertyFile() {
         parentFile.mkdirs()
         writeText(generateProperties())
     }
+}
+
+val decoroutinatorAgentJarName = "decoroutinator-agent.jar"
+
+abstract class LoadDecoroutinatorAgentJar: DefaultTask() {
+    @get:InputFiles
+    abstract val config: ConfigurableFileCollection
+
+    @get:InputFile
+    abstract val jarFile: RegularFileProperty
+
+    @TaskAction
+    fun process() {
+        val destFile = jarFile.get().asFile
+        destFile.delete()
+        Files.copy(config.singleFile.toPath(), destFile.toPath())
+    }
+}
+val loadDecoroutinatorAgentJar by tasks.registering(LoadDecoroutinatorAgentJar::class) {
+    config.from(decoroutinatorAgentConf)
+    jarFile.set(file(decoroutinatorAgentJarName))
 }
 
 fun generateProperties(prefix: String = "") = """
@@ -93,6 +121,8 @@ fun generateProperties(prefix: String = "") = """
     server.compression.enabled=true
     server.compression.mime-types=application/json,text/javascript,application/wasm
     springdoc.swagger-ui.path: /api-docs/swagger-ui.html
+    decoroutinatorAgent.jar=${prefix + decoroutinatorAgentJarName}
+    decoroutinator.version=${libs.versions.decoroutinator.get()}
 """.trimIndent()
 
 tasks.withType<KotlinCompile> {
@@ -101,6 +131,7 @@ tasks.withType<KotlinCompile> {
     }
     dependsOn(":executors:jar")
     dependsOn(":indexation:run")
+    dependsOn(loadDecoroutinatorAgentJar)
     buildPropertyFile()
 }
 println("Using Kotlin compiler ${libs.versions.kotlin.get()}")
@@ -133,6 +164,7 @@ val buildLambda by tasks.creating(Zip::class) {
     from(libJVMFolder) { into(libJVM) }
     from(compilerPluginsForJVMFolder) {into(compilerPluginsForJVM)}
     from(libComposeWasmCompilerPluginsFolder) { into(libComposeWasmCompilerPlugins) }
+    from(decoroutinatorAgentJarName)
     into("lib") {
         from(configurations.compileClasspath) { exclude("tomcat-embed-*") }
     }

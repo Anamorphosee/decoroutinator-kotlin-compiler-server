@@ -4,6 +4,7 @@ import com.compiler.server.executor.CommandLineArgument
 import com.compiler.server.executor.JavaExecutor
 import com.compiler.server.model.JvmExecutionResult
 import com.compiler.server.model.OutputDirectory
+import com.compiler.server.model.RecoveryType
 import com.compiler.server.model.bean.LibrariesFile
 import com.compiler.server.model.toExceptionDescriptor
 import component.KotlinEnvironment
@@ -32,9 +33,12 @@ class KotlinCompiler(
   private val kotlinEnvironment: KotlinEnvironment,
   private val javaExecutor: JavaExecutor,
   private val librariesFile: LibrariesFile,
-  @Value("\${policy.file}") private val policyFileName: String
+  @Value("\${policy.file}") private val policyFileName: String,
+  @Value("\${decoroutinatorAgent.jar}") private val decoroutinatorAgentJarName: String,
+  @Value("\${decoroutinator.version}") private val decoroutinatorVersion: String
 ) {
   private val policyFile = File(policyFileName)
+  private val decoroutinatorAgentJarFile = Path.of(decoroutinatorAgentJarName)
 
   data class JvmClasses(
     val files: Map<String, ByteArray> = emptyMap(),
@@ -59,7 +63,12 @@ class KotlinCompiler(
       ?.joinToString("\n\n")
   }
 
-  fun run(files: List<KtFile>, addByteCode: Boolean, args: String): JvmExecutionResult {
+  fun run(
+      files: List<KtFile>,
+      addByteCode: Boolean,
+      args: String,
+      recoveryType: RecoveryType?
+  ): JvmExecutionResult {
     return execute(files, addByteCode) { output, compiled ->
       val mainClass = JavaRunnerExecutor::class.java.name
       val compiledMainClass = when (compiled.mainClasses.size) {
@@ -75,16 +84,20 @@ class KotlinCompiler(
         )
       }
       val arguments = listOfNotNull(compiledMainClass) + args.split(" ")
-      javaExecutor.execute(argsFrom(mainClass, output, arguments))
+      javaExecutor.execute(argsFrom(mainClass, output, arguments, recoveryType))
         .asExecutionResult()
     }
   }
 
-  fun test(files: List<KtFile>, addByteCode: Boolean): JvmExecutionResult {
+  fun test(files: List<KtFile>, addByteCode: Boolean, recoveryType: RecoveryType?): JvmExecutionResult {
     return execute(files, addByteCode) { output, _ ->
       val mainClass = JUnitExecutors::class.java.name
-      javaExecutor.execute(argsFrom(mainClass, output, listOf(output.path.toString())))
-        .asJUnitExecutionResult()
+      javaExecutor.execute(argsFrom(
+          mainClass = mainClass,
+          outputDirectory = output,
+          args = listOf(output.path.toString()),
+          recoveryType = recoveryType
+      )).asJUnitExecutionResult()
     }
   }
 
@@ -165,6 +178,8 @@ class KotlinCompiler(
     val policy = policyFile.readText()
       .replace("%%GENERATED%%", outputDir.toString().replace('\\', '/'))
       .replace("%%LIB_DIR%%", libDir.replace('\\', '/'))
+      .replace("%%DECOROUTINATOR_AGENT_JAR%%", decoroutinatorAgentJarFile.toString().replace('\\', '/'))
+      .replace("%%DECOROUTINATOR_VERSION%%", decoroutinatorVersion)
     (outputDir / policyFile.name).apply { parent.toFile().mkdirs() }.toFile().writeText(policy)
     return OutputDirectory(outputDir, classes.files.map { (name, bytes) ->
       (outputDir / name).let { path ->
@@ -177,7 +192,8 @@ class KotlinCompiler(
   private fun argsFrom(
     mainClass: String?,
     outputDirectory: OutputDirectory,
-    args: List<String>
+    args: List<String>,
+    recoveryType: RecoveryType?
   ): List<String> {
     val classPaths =
       (kotlinEnvironment.classpath.map { it.absolutePath } + outputDirectory.path.toAbsolutePath().toString())
@@ -188,7 +204,9 @@ class KotlinCompiler(
       mainClass = mainClass,
       policy = policy,
       memoryLimit = 32,
-      arguments = args
+      arguments = args,
+      decoroutinatorAgentJarPath = decoroutinatorAgentJarFile,
+      recoveryType = recoveryType
     ).toList()
   }
 }
