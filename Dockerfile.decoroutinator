@@ -1,0 +1,5 @@
+FROM amazoncorretto:17
+COPY . .
+RUN ./gradlew --no-daemon bootJar -x test
+RUN ln -s $(find ./build/libs/ -type f -name "*.jar" ! -name "*-plain.jar" -print -quit) app.jar
+ENTRYPOINT ["./entry.sh"]

@@ -12,6 +12,7 @@ import com.compiler.server.model.KotlinTranslatableCompiler
 import com.compiler.server.model.Project
 import com.compiler.server.model.ProjectFile
 import com.compiler.server.model.ProjectType
+import com.compiler.server.model.RecoveryType
 import com.compiler.server.model.TranslationResultWithJsCode
 import com.compiler.server.service.CompilerArgumentsService
 import com.compiler.server.service.KotlinProjectExecutor
@@ -35,13 +36,14 @@ class CompilerRestController(
     fun executeKotlinProjectEndpoint(
         @RequestBody @Valid request: RunRequest,
         @RequestParam(defaultValue = "false") addByteCode: Boolean,
+        @RequestParam("recoveryType", required = false) recoveryType: RecoveryType?
     ): ExecutionResult {
         return kotlinProjectExecutor.run(
             Project(
                 args = request.args,
                 files = request.files.map { ProjectFile(name = it.name, text = it.text) },
                 compilerArguments = listOf(request.compilerArguments)
-            ), addByteCode
+            ), addByteCode, recoveryType
         )
     }
 
@@ -49,13 +51,14 @@ class CompilerRestController(
     fun testKotlinProjectEndpoint(
         @RequestBody @Valid request: TestRequest,
         @RequestParam(defaultValue = "false") addByteCode: Boolean,
+        @RequestParam(required = false) recoveryType: RecoveryType?
     ): ExecutionResult {
         return kotlinProjectExecutor.test(
             Project(
                 args = request.args,
                 files = request.files.map { ProjectFile(name = it.name, text = it.text) },
                 compilerArguments = listOf(request.compilerArguments)
-            ), addByteCode
+            ), addByteCode, recoveryType
         )
     }
 

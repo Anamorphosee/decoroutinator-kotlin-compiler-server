@@ -11,6 +11,13 @@ data class Project(
   val compilerArguments: List<Map<String, Any>> = emptyList()
 )
 
+enum class RecoveryType {
+    DECOROUTINATOR,
+    STDLIB,
+    NONE,
+    FULL
+}
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CompilerArgument(val name: String = "", val value: String = "")
 

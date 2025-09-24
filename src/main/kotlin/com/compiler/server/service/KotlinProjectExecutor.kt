@@ -21,13 +21,13 @@ class KotlinProjectExecutor(
 
     private val log = LoggerFactory.getLogger(KotlinProjectExecutor::class.java)
 
-    fun run(project: Project, addByteCode: Boolean): ExecutionResult {
-        return environment.synchronize { kotlinCompiler.run(project.files, addByteCode, project.args, project.compilerArguments.getOrElse(0, { emptyMap() })) }
+    fun run(project: Project, addByteCode: Boolean, recoveryType: RecoveryType?): ExecutionResult {
+        return environment.synchronize { kotlinCompiler.run(project.files, addByteCode, project.args, project.compilerArguments.getOrElse(0, { emptyMap() }), recoveryType) }
             .also { logExecutionResult(project, it) }
     }
 
-    fun test(project: Project, addByteCode: Boolean): ExecutionResult {
-        return environment.synchronize { kotlinCompiler.test(project.files, addByteCode, project.compilerArguments.getOrElse(0, { emptyMap() })) }
+    fun test(project: Project, addByteCode: Boolean, recoveryType: RecoveryType?): ExecutionResult {
+        return environment.synchronize { kotlinCompiler.test(project.files, addByteCode, project.compilerArguments.getOrElse(0, { emptyMap() }), recoveryType) }
             .also { logExecutionResult(project, it) }
     }
 

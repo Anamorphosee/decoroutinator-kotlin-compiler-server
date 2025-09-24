@@ -1,6 +1,7 @@
 package com.compiler.server.executor
 
 import com.compiler.server.model.ProgramOutput
+import com.compiler.server.model.RecoveryType
 import org.springframework.stereotype.Component
 import java.io.BufferedReader
 import java.io.IOException
@@ -108,14 +109,25 @@ class CommandLineArgument(
     val policy: Path,
     val memoryLimit: Int,
     val arguments: List<String>,
+    val decoroutinatorAgentJarPath: Path,
+    val recoveryType: RecoveryType?
 ) {
     fun toList(): List<String> {
+        val decoroutinatorArg = when (recoveryType) {
+            null, RecoveryType.DECOROUTINATOR, RecoveryType.FULL -> "-javaagent:$decoroutinatorAgentJarPath"
+            RecoveryType.STDLIB, RecoveryType.NONE -> null
+        }
+        val stdlibArg = when (recoveryType) {
+            RecoveryType.STDLIB, RecoveryType.FULL -> "-Dkotlinx.coroutines.debug=on"
+            null, RecoveryType.DECOROUTINATOR, RecoveryType.NONE -> null
+        }
         return (listOf(
             getJavaPath(),
             "-Xmx" + memoryLimit + "M",
             "-Djava.security.manager",
             "-Djava.security.policy=$policy",
-            "-ea",
+            decoroutinatorArg,
+            stdlibArg,
             "-classpath"
         ) + classPaths + mainClass + arguments).filterNotNull()
     }

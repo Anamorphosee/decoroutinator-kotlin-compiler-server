@@ -113,6 +113,7 @@ dependencies {
     kotlinDependency(libs.kotlinx.io.core)
     kotlinDependency(libs.kotlinx.serialization.json.jvm)
     kotlinDependency(libs.kotlinx.serialization.core.jvm)
+    kotlinDependency(libs.decoroutinator.agent)
     kotlinCompilerPluginDependency(libs.kotlin.serialization.plugin)
     kotlinJsDependency(libs.kotlin.stdlib.js)
     kotlinJsDependency(libs.kotlin.dom.api.compat)

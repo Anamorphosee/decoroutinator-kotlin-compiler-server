@@ -4,6 +4,7 @@ build/
 !**/src/main/**
 !**/src/test/**
 src/main/resources/application.properties
+decoroutinator-agent.jar
 
 # compile artifacts
 .kotlin/

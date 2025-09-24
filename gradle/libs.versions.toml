@@ -17,6 +17,7 @@ jackson = "2.19.2"
 hamcrest = "3.0"
 compose = "1.7.0"
 gradle-develocity = "3.17.5"
+decoroutinator="2.5.9"
 
 [libraries]
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
@@ -61,6 +62,7 @@ compose-components-resources = { group = "org.jetbrains.compose.components", nam
 kotlin-serialization-plugin = {group= "org.jetbrains.kotlin", name="kotlin-serialization-compiler-plugin", version.ref = "kotlin"}
 gradle-develocity = {group = "com.gradle", name= "develocity-gradle-plugin", version.ref = "gradle-develocity"}
 gson = { group = "com.google.code.gson", name = "gson"}
+decoroutinator-agent = { group = "dev.reformator.stacktracedecoroutinator", name = "stacktrace-decoroutinator-jvm-agent", version.ref = "decoroutinator"}
 
 #spring stack dependencies
 aws-springboot-container = { group = "com.amazonaws.serverless", name = "aws-serverless-java-container-springboot3", version.ref = "aws-serverless-java-container-springboot3" }
